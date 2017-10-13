@@ -6,9 +6,9 @@ import random
 
 # RNN Hyper Parameters
 alphabet_size = 127
-batch_size = 100
+batch_size = 5
 num_of_hidden_states = 10
-num_of_steps = 5
+num_of_steps = 1
 learning_rate = 0.1
 num_of_epocs = 10
 
