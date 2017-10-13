@@ -47,9 +47,7 @@ def getBatch(words, lables):
     return temp_words, temp_lables
 
 
-def train_network(words, labels_key, num_epochs, num_steps = 5, state_size=4, verbose=True):
-    session = tf.InteractiveSession()
-
+def build_graph(words, labels_key, session):
     # Input
     with tf.name_scope("Inputs"):
         inputs = tf.placeholder(tf.int32, [None, num_of_steps], name="inputs")
@@ -81,21 +79,15 @@ def train_network(words, labels_key, num_epochs, num_steps = 5, state_size=4, ve
 
         tf.summary.scalar("loss", total_loss)
 
-            # Summary
-        summary = tf.summary.merge_all()
-        writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
 
-    for i in range(2000):
+def train_network(iterations, summary, writer, session):
+    for i in range(iterations):
         session.run(tf.global_variables_initializer())
         session.run(train_step, feed_dict={inputs: words, labels: labels_key})
         if i % 100 == 0:
             print("Step: " + str(i))
             s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
             writer.add_summary(s, i)
-
-
-    num_epochs = 1
-    verbose = True
 
 
 
@@ -111,7 +103,14 @@ def bias_variable(shape, name):
 def main():
     words, labels = parseTextFile("input.txt")
     batched_words, batched_labels = getBatch(words, labels)
-    train_network(batched_words, batched_labels, 10, 15)
+
+    session = tf.InteractiveSession()
+
+    build_graph(batched_words, batched_labels, session)
+    summary = tf.summary.merge_all()
+    writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
+
+    train_network(20, summary, writer, session)
 
 
 
