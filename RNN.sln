@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2002
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "RNN", "RNN\RNN.pyproj", "{B7F4B5D5-8943-4854-8A86-D383E2B55386}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7F4B5D5-8943-4854-8A86-D383E2B55386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7F4B5D5-8943-4854-8A86-D383E2B55386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {48BEB9A0-5C2D-4B1A-BACB-4A04080E1B86}
+	EndGlobalSection
+EndGlobal
