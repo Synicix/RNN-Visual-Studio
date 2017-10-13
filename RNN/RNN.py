@@ -64,15 +64,13 @@ def train_network(words, labels_key, num_epochs, num_steps = 5, state_size=4, ve
         rnn_cell = tf.contrib.rnn.BasicRNNCell(num_of_hidden_states)
         rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, initial_state=init_state)
 
-    # Summary
-    summary = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
+
 
     # Loss and Training Step
     with tf.variable_scope("Cell-Output"):
         W_y = weight_variable([num_of_hidden_states, alphabet_size ], "W_y")
         b_y = bias_variable([alphabet_size], "b_y")
-
+        
     with tf.name_scope("Loss"):
         logits = tf.reshape(tf.matmul(tf.reshape(rnn_outputs, [-1, num_of_hidden_states]), W_y) + b_y, [batch_size, num_of_steps, alphabet_size])
         predictions = tf.nn.softmax(logits)
@@ -81,16 +79,20 @@ def train_network(words, labels_key, num_epochs, num_steps = 5, state_size=4, ve
         total_loss = tf.reduce_mean(losses)
         train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
 
-        tf.summary.histogram("loss", losses)
+        tf.summary.scalar("loss", total_loss)
 
+            # Summary
+        summary = tf.summary.merge_all()
+        writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
 
     for i in range(2000):
         session.run(tf.global_variables_initializer())
         session.run(train_step, feed_dict={inputs: words, labels: labels_key})
-        if i % 100:
-            print("Step: " + i)
-            s = sess.run(summary, feed_dict={inputs: words, labels: labels_key})
+        if i % 100 == 0:
+            print("Step: " + str(i))
+            s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
             writer.add_summary(s, i)
+
 
     num_epochs = 1
     verbose = True
