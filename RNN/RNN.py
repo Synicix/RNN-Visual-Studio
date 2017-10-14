@@ -5,12 +5,14 @@ import numpy as np
 import random
 
 # RNN Hyper Parameters
-alphabet_size = 127
-batch_size = 5
-num_of_hidden_states = 10
-num_of_steps = 1
+alphabet_size = 96
+batch_size = 100
+num_of_hidden_states = 100
+num_of_steps = 50
 learning_rate = 0.1
-num_of_epocs = 10
+iterations = 2000
+
+
 
 def parseTextFile(file_path):
     words = []
@@ -22,32 +24,40 @@ def parseTextFile(file_path):
         for line in fp:
             char_array = list(line)
             for char in char_array: # For every Char
-                words.append(ord(char))
-                labels.append(ord(char))
-
+                if char == "\n":
+                    words.append(95)
+                    labels.append(95)
+                else:
+                    words.append(ord(char) - 32)
+                    labels.append(ord(char) - 32)
+               
+    
 
     labels.pop(1)
+    labels.append(0)
 
     return words, labels
 
 
-def getBatch(words, lables):
+def getBatch(words, labels):
     temp_words = [[0 for x in range(num_of_steps)] for y in range(batch_size)]
     temp_lables = [[0 for x in range(num_of_steps)] for y in range(batch_size)]
-
     current_letter = 0
     for i in range(0, batch_size):
         current_letter = random.randint(0, words.__len__())
         for j in range(0, num_of_steps):
             temp_words[i][j] = words[current_letter]
-            temp_lables[i][j] = lables[current_letter]
-            print(words[current_letter])
+            temp_lables[i][j] = labels[current_letter]
             current_letter = (current_letter + 1) % words.__len__()
 
     return temp_words, temp_lables
 
 
-def build_graph(words, labels_key, session):
+def build_graph(words, labels_key):
+    session = tf.InteractiveSession()
+
+
+
     # Input
     with tf.name_scope("Inputs"):
         inputs = tf.placeholder(tf.int32, [None, num_of_steps], name="inputs")
@@ -55,19 +65,19 @@ def build_graph(words, labels_key, session):
 
     rnn_inputs = tf.one_hot(inputs, 127, 1.0, 0.0, -1)
 
-    # RNN
-    init_state = tf.zeros([batch_size, num_of_hidden_states])
+    # LSTM
 
-    with tf.name_scope("RNN_Cell"):
-        rnn_cell = tf.contrib.rnn.BasicRNNCell(num_of_hidden_states)
-        rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, initial_state=init_state)
-
-
+    with tf.name_scope("LSTM_Cell"):
+        rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_of_hidden_states)
+        rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, dtype=tf.float32)
+ 
 
     # Loss and Training Step
     with tf.variable_scope("Cell-Output"):
         W_y = weight_variable([num_of_hidden_states, alphabet_size ], "W_y")
         b_y = bias_variable([alphabet_size], "b_y")
+        tf.summary.histogram("W_y", W_y)
+        tf.summary.histogram("b_y", b_y)
         
     with tf.name_scope("Loss"):
         logits = tf.reshape(tf.matmul(tf.reshape(rnn_outputs, [-1, num_of_hidden_states]), W_y) + b_y, [batch_size, num_of_steps, alphabet_size])
@@ -79,15 +89,31 @@ def build_graph(words, labels_key, session):
 
         tf.summary.scalar("loss", total_loss)
 
+        summary = tf.summary.merge_all()
+        writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
 
-def train_network(iterations, summary, writer, session):
-    for i in range(iterations):
-        session.run(tf.global_variables_initializer())
-        session.run(train_step, feed_dict={inputs: words, labels: labels_key})
-        if i % 100 == 0:
-            print("Step: " + str(i))
-            s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
-            writer.add_summary(s, i)
+
+        saver = tf.train.Saver()
+        saver.restore(session, "/RNN/model.ckpt")
+
+        for i in range(iterations):
+            session.run(tf.global_variables_initializer())
+            session.run(train_step, feed_dict={inputs: words, labels: labels_key})
+            if i % 10 == 0:
+                print("Step: " + str(i))
+                s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
+                writer.add_summary(s, i)
+
+                # Sample for 1000 characters
+
+               # output = session.run([logits], feed_dict={inputs: words, labels: labels_key})
+
+                #temp = np.argmax(output[0][0][0])
+                #print(output[0][0][0])
+
+        save_path = saver.save(session, "/RNN/model.ckpt")
+
+
 
 
 
@@ -104,14 +130,8 @@ def main():
     words, labels = parseTextFile("input.txt")
     batched_words, batched_labels = getBatch(words, labels)
 
-    session = tf.InteractiveSession()
-
-    build_graph(batched_words, batched_labels, session)
-    summary = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
-
-    train_network(20, summary, writer, session)
-
+    train_step = build_graph(batched_words, batched_labels)
+ 
 
 
 if __name__ == "__main__":
