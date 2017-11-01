@@ -6,9 +6,9 @@ import random
 
 # RNN Hyper Parameters
 alphabet_size = 96
-batch_size = 100
+batch_size = 100000
 num_of_hidden_states = 100
-num_of_steps = 50
+num_of_steps = 100
 learning_rate = 0.1
 iterations = 2000
 
@@ -94,7 +94,7 @@ def build_graph(words, labels_key):
 
 
         saver = tf.train.Saver()
-        saver.restore(session, "/RNN/model.ckpt")
+        //saver.restore(session, "/RNN/model.ckpt")
 
         for i in range(iterations):
             session.run(tf.global_variables_initializer())
