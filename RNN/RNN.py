@@ -60,9 +60,11 @@ def build_graph(session, alphabet_size, batch_size, num_of_hidden_states, num_of
         rnn_outputs_sample, final_state_sample = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs_sample, dtype=tf.float32)
 
     # Loss and Training Step
-    W_y = weight_variable([num_of_hidden_states, alphabet_size], "W_y")
-    b_y = bias_variable([alphabet_size], "b_y")
-
+    with tf.name_scope("Output_Layer"):
+        W_y = weight_variable([num_of_hidden_states, alphabet_size], "W_y")
+        b_y = bias_variable([alphabet_size], "b_y")
+        tf.summary.histogram("Weight", W_y)
+        tf.summary.histogram("bias", b_y)
 
 
     with tf.name_scope("Loss"):
@@ -94,12 +96,13 @@ def build_graph(session, alphabet_size, batch_size, num_of_hidden_states, num_of
     for i in range(0, iterations):
         words, labels_key = getBatch(num_of_steps, batch_size)
         session.run(train_step, feed_dict={inputs: words, labels: labels_key})
-        if i % 10 == 0:
-            print("Step: " + str(i))
+        print("Step: " + str(i))
+
+        if i % 100 == 0:
             s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
             writer.add_summary(s, i)
         if i % 1000 == 0:
-            save_path = saver.save(session, "/RNN/model.ckpt")
+            # save_path = saver.save(session, "/RNN/model.ckpt")
             starting_char = random.randint(0, alphabet_size - 1)
             temp_words = [[0 for x in range(num_of_steps)] for y in range(1)]
             temp_words[0][0] = starting_char
@@ -143,7 +146,7 @@ def main():
     batch_size = 1
     num_of_hidden_states = 100
     num_of_steps = 50
-    learning_rate = 0.2
+    learning_rate = 0.01
     iterations = 100
 
     # Sample from data

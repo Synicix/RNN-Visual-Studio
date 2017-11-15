@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b7f4b5d5-8943-4854-8a86-d383e2b55386</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>CNN.py</StartupFile>
+    <StartupFile>RNN.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
