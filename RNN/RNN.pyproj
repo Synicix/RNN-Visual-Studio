@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b7f4b5d5-8943-4854-8a86-d383e2b55386</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>RNN.py</StartupFile>
+    <StartupFile>CNN.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CNN.py" />
     <Compile Include="RNN.py" />
+    <Compile Include="SoftMax.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Input.txt" />

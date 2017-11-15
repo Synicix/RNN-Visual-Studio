@@ -44,85 +44,83 @@ def getBatch(num_of_steps, batch_size):
 
 
 def build_graph(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, learning_rate, iterations):
-    with tf.device('/gpu:0'):
-        # Input
-        with tf.name_scope("Inputs"):
-            inputs = tf.placeholder(tf.int32, [None, num_of_steps], name="inputs")
-            inputs_sample = tf.placeholder(tf.int32, [1, num_of_steps])
-            labels = tf.placeholder(tf.int32, [None, num_of_steps], name="labels")
+    # Input
+    with tf.name_scope("Inputs"):
+        inputs = tf.placeholder(tf.int32, [None, num_of_steps], name="inputs")
+        inputs_sample = tf.placeholder(tf.int32, [1, num_of_steps])
+        labels = tf.placeholder(tf.int32, [None, num_of_steps], name="labels")
 
-        rnn_inputs = tf.one_hot(inputs, alphabet_size, 1.0, 0.0, -1)
-        rnn_inputs_sample = tf.one_hot(inputs_sample, alphabet_size, 1.0, 0.0, -1)
+    rnn_inputs = tf.one_hot(inputs, alphabet_size, 1.0, 0.0, -1)
+    rnn_inputs_sample = tf.one_hot(inputs_sample, alphabet_size, 1.0, 0.0, -1)
 
-        # LSTM
-        with tf.name_scope("LSTM_Cell"):
-            rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_of_hidden_states)
-            rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, dtype=tf.float32)
-            rnn_outputs_sample, final_state_sample = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs_sample, dtype=tf.float32)
+    # LSTM
+    with tf.name_scope("LSTM_Cell"):
+        rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_of_hidden_states)
+        rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, dtype=tf.float32)
+        rnn_outputs_sample, final_state_sample = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs_sample, dtype=tf.float32)
 
-        # Loss and Training Step
-        with tf.variable_scope("Cell-Output"):
-            W_y = weight_variable([num_of_hidden_states, alphabet_size], "W_y")
-            b_y = bias_variable([alphabet_size], "b_y")
-            tf.summary.histogram("W_y", W_y)
-            tf.summary.histogram("b_y", b_y)
-
-        with tf.name_scope("Loss"):
-            logits = tf.reshape(tf.matmul(tf.reshape(rnn_outputs, [-1, num_of_hidden_states]), W_y) + b_y,
-                                [batch_size, num_of_steps, alphabet_size])
-            logits_sample = tf.reshape(tf.matmul(tf.reshape(rnn_outputs_sample, [-1, num_of_hidden_states]), W_y) + b_y,
-                                       [1, num_of_steps, alphabet_size])
-
-            predictions = tf.nn.softmax(logits)
-            predictions_sample = tf.nn.softmax(logits_sample)
-            print(predictions_sample)
-
-            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
-            total_loss = tf.reduce_mean(losses)
-            train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
-
-            tf.summary.scalar("loss", total_loss)
-
-        saver = tf.train.Saver()
-
-        summary = tf.summary.merge_all()
-        writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
-
-        session.run(tf.global_variables_initializer())
-
-        # Training
+    # Loss and Training Step
+    W_y = weight_variable([num_of_hidden_states, alphabet_size], "W_y")
+    b_y = bias_variable([alphabet_size], "b_y")
 
 
-        for i in range(0, iterations):
-            words, labels_key = getBatch(num_of_steps, batch_size)
-            session.run(train_step, feed_dict={inputs: words, labels: labels_key})
-            if i % 10 == 0:
-                print("Step: " + str(i))
-                s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
-                writer.add_summary(s, i)
-            if i % 1000 == 0:
-                save_path = saver.save(session, "/RNN/model.ckpt")
-                starting_char = random.randint(0, alphabet_size - 1)
-                temp_words = [[0 for x in range(num_of_steps)] for y in range(1)]
-                temp_words[0][0] = starting_char
-                print("Sampling Text:\n")
-                if starting_char == 95:
+
+    with tf.name_scope("Loss"):
+        logits = tf.reshape(tf.matmul(tf.reshape(rnn_outputs, [-1, num_of_hidden_states]), W_y) + b_y,
+                            [batch_size, num_of_steps, alphabet_size])
+        logits_sample = tf.reshape(tf.matmul(tf.reshape(rnn_outputs_sample, [-1, num_of_hidden_states]), W_y) + b_y,
+                                    [1, num_of_steps, alphabet_size])
+
+        predictions = tf.nn.softmax(logits)
+        predictions_sample = tf.nn.softmax(logits_sample)
+        print(predictions_sample)
+
+        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+        total_loss = tf.reduce_mean(losses)
+        train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
+
+        tf.summary.scalar("loss", total_loss)
+
+    saver = tf.train.Saver()
+
+    summary = tf.summary.merge_all()
+    writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
+
+    session.run(tf.global_variables_initializer())
+
+    # Training
+
+
+    for i in range(0, iterations):
+        words, labels_key = getBatch(num_of_steps, batch_size)
+        session.run(train_step, feed_dict={inputs: words, labels: labels_key})
+        if i % 10 == 0:
+            print("Step: " + str(i))
+            s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
+            writer.add_summary(s, i)
+        if i % 1000 == 0:
+            save_path = saver.save(session, "/RNN/model.ckpt")
+            starting_char = random.randint(0, alphabet_size - 1)
+            temp_words = [[0 for x in range(num_of_steps)] for y in range(1)]
+            temp_words[0][0] = starting_char
+            print("Sampling Text:\n")
+            if starting_char == 95:
+                print("", end="\n")
+            else:
+                char_temp = chr(starting_char + 32)
+                print(char_temp, end='', flush=True)
+
+            for j in range(0, num_of_steps - 1):
+                next_char = session.run([predictions_sample], feed_dict={inputs_sample: temp_words})
+                temp = next_char[0][0][j]
+                temp_words[0][j + 1] = np.argmax((next_char[0][0][j]))
+
+                if temp_words[0][j + 1] == 95:
                     print("", end="\n")
                 else:
-                    char_temp = chr(starting_char + 32)
-                    print(char_temp, end='', flush=True)
-
-                for j in range(0, num_of_steps - 1):
-                    next_char = session.run([predictions_sample], feed_dict={inputs_sample: temp_words})
-                    temp = next_char[0][0][j]
-                    temp_words[0][j + 1] = np.argmax((next_char[0][0][j]))
-
-                    if temp_words[0][j + 1] == 95:
-                        print("", end="\n")
-                    else:
-                        print(chr(temp_words[0][j + 1] + 32), end='', flush=True)
-                print("\n")
-                iterations = iterations * 2
+                    print(chr(temp_words[0][j + 1] + 32), end='', flush=True)
+            print("\n")
+            iterations = iterations * 2
 
 
 
@@ -137,11 +135,12 @@ def bias_variable(shape, name):
 
 
 def main():
-    session = tf.InteractiveSession()
+    config = tf.ConfigProto(allow_soft_placement=True)
+    session = tf.InteractiveSession(config=config)
 
     # RNN Hyper Parameters
     alphabet_size = 96
-    batch_size = 1000
+    batch_size = 1
     num_of_hidden_states = 100
     num_of_steps = 50
     learning_rate = 0.2
