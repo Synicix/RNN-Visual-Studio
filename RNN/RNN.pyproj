@@ -26,7 +26,8 @@
     <Compile Include="SoftMax.py" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Input.txt" />
+    <Content Include="Input1.txt" />
+    <Content Include="input2.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

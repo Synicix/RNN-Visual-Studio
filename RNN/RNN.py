@@ -16,16 +16,27 @@ def parseTextFile(file_path):
         for line in fp:
             char_array = list(line)
             for char in char_array:  # For every Char
-                if char == "\n":
+                if char == '\n':
                     words.append(95)
                     labels.append(95)
+                elif char == '“':
+                    words.append(96)
+                    labels.append(96)
+                elif char == '”':
+                    words.append(97)
+                    labels.append(97)
+                elif char == '’':
+                    words.append(98)
+                    labels.append(98)
                 else:
+                    if ord(char) - 32 > 99:
+                        print(ord(char))
                     words.append(ord(char) - 32)
                     labels.append(ord(char) - 32)
 
+
     labels.pop(1)
     labels.append(0)
-
     return words, labels
 
 
@@ -142,7 +153,7 @@ def main():
     session = tf.InteractiveSession(config=config)
 
     # RNN Hyper Parameters
-    alphabet_size = 96
+    alphabet_size = 99
     batch_size = 1
     num_of_hidden_states = 100
     num_of_steps = 50
@@ -150,7 +161,7 @@ def main():
     iterations = 100
 
     # Sample from data
-    parseTextFile("input.txt")
+    parseTextFile("input2.txt")
     batched_words, batched_labels = getBatch(num_of_steps, batch_size)
 
     build_graph(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, learning_rate, 10000)
