@@ -58,7 +58,7 @@ def getBatch(num_of_steps, batch_size):
     return temp_words, temp_lables
 
 
-def build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, learning_rate, iterations, num_of_sample_char):
+def build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, num_of_layers, learning_rate, iterations, num_of_sample_char):
     with tf.device('/gpu:0'):
         # Input
         with tf.name_scope("Inputs"):
@@ -71,7 +71,7 @@ def build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_stat
 
         # LSTM
         with tf.name_scope("LSTM_Cell"):
-            rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_of_hidden_states)
+            rnn_cell = tf.nn.rnn_cell.LSTMCell(num_of_hidden_states, state_is_tuple=True)
             rnn_outputs, final_state = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs, dtype=tf.float32)
             rnn_outputs_sample, final_state_sample = tf.nn.dynamic_rnn(rnn_cell, rnn_inputs_sample, dtype=tf.float32)
 
@@ -100,11 +100,12 @@ def build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_stat
             tf.summary.scalar("loss", total_loss)
 
         saver = tf.train.Saver()
+        saver.restore(session, "/RNN/model.ckpt")
 
         summary = tf.summary.merge_all()
         writer = tf.summary.FileWriter("/TensorBoard/RNN", session.graph)
 
-        session.run(tf.global_variables_initializer())
+        #session.run(tf.global_variables_initializer())
 
         # Training
 
@@ -118,7 +119,7 @@ def build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_stat
                 s = session.run(summary, feed_dict={inputs: words, labels: labels_key})
                 writer.add_summary(s, i)
             if i % 1000 == 0:
-                # save_path = saver.save(session, "/RNN/model.ckpt")
+                save_path = saver.save(session, "/RNN/model.ckpt")
                 starting_char = random.randint(0, alphabet_size - 1)
                 temp_words = np.zeros(shape=(1, num_of_steps), dtype=int)
                 temp_words[0][0] = starting_char
@@ -177,19 +178,22 @@ def main():
 
     # RNN Hyper Parameters
     alphabet_size = 100
-    batch_size = 1000
-    num_of_hidden_states = 100
-    num_of_steps = 50
-    learning_rate = 0.2
+    batch_size = 100
+    num_of_hidden_states = 512
+    num_of_steps = 100
+    num_of_layers = 3
+    learning_rate = 0.6
     iterations = 100
 
-    num_of_sample_char = 1000
+    num_of_sample_char = 5000
 
     # Sample from data
     parseTextFile("input2.txt")
     batched_words, batched_labels = getBatch(num_of_steps, batch_size)
 
-    build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, learning_rate, 10000, num_of_sample_char)
+    build_graph_and_train(session, alphabet_size, batch_size, num_of_hidden_states, num_of_steps, num_of_layers, learning_rate, 10000, num_of_sample_char)
+
+    session.close()
 
 
 if __name__ == "__main__":
